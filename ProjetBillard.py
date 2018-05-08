@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 #-------------------------------------------------------------------------------
@@ -37,7 +37,8 @@ Click droit: change la position de la boule blanche.\n\
 Entrée: Tirer.\n\
 Espace: Tir droit (0°).\n\
 Ctrl (droit): change la boule tirée.\n\
-Maj+S: Sauvegarde la v_rouge(t) dans un *.csv")
+Ctrl+S: Sauvegarde les donées du tir dans un *.csv\n\
+Les coordonnées en bas à gauche sont en mètres.")
 		tuto.pack()
 
 	def afficher(self):
@@ -83,7 +84,11 @@ class Ball:
 		#Pour afficher la trajectoire
 		self.couleur = couleur
 		self.save = []
+		#Pour la sauvegarde des données
+		self.savex = []
+		self.savey = []
 		self.savit = []
+		self.sava = []
 		#Création et affichage de l'objet
 		self.objet = self.canvas.create_oval(self.coordx, self.coordy,
 							self.coordx+30, self.coordy+30, fill=couleur)
@@ -134,7 +139,7 @@ class Ball:
 			#Si il y a collision <=> distance entre les boules <= 2*rayons
 			#(Comme on vérifie pour chaque boule, on le fait dans le cas générale,
 			#d'où "dist != 0" <=> "dist"):
-			#   Il y aura rebond 
+			#   Il y aura rebond
 			if (dist <= 30) and (dist != 0):
 				self.collision(main.Boules[k])
 			if (self.flag == False) and (main.Boules[k].flag == False):
@@ -166,7 +171,10 @@ class Ball:
 				count += 1
 				self.canvas.delete(self.canvas, boule.save[k])
 			boule.save = []
+			boule.savex = []
+			boule.savey = []
 			boule.savit = []
+			boule.sava = []
 		supprsave(main.Alpha)
 		supprsave(main.Beta)
 		supprsave(main.Gamma)
@@ -192,8 +200,8 @@ class Ball:
 		else:
 			self.ralentissement2()
 		#Changement des positions
-		self.coordx += self.vitx*0.02
-		self.coordy += self.vity*0.02
+		self.coordx += self.vitx*0.01
+		self.coordy += self.vity*0.01
 		self.test_collision()
 		#Il bouge...
 		self.canvas.coords(self.objet, self.coordx, self.coordy,
@@ -216,32 +224,32 @@ class Ball:
 	def ralentissement(self):
 		#Ralentissement (Loi de Coulomb)
 		#vitesse(t) = -f*g*t + v0
-		#En programmant cela dans une boucle de 20 ms,
+		#En programmant cela dans une boucle de 2*10 ms,
 		#on a une suite définie par récurence:
-		#vitesse(t + 10ms) = convertion(-f*g*0.02, m/s en px/s) + v(t)
-			
+		#vitesse(t + 10ms) = convertion(-f*g*0.01, m/s en px/s) + v(t)
+
 ##        f = float(main.frottement.get())
 ##        if (self.vitx > 0):
-##            self.vitx = (-f*9.81*0.02)/10*self.metre + self.vitx
+##            self.vitx = (-f*9.81*0.01)/10*self.metre + self.vitx
 ##            if (self.vitx <= 0):
 ##                self.vitx = 0
 ##        elif (self.vitx < 0):
-##            self.vitx = (f*9.81*0.02)/10*self.metre + self.vitx
+##            self.vitx = (f*9.81*0.01)/10*self.metre + self.vitx
 ##            if (self.vitx >= 0):
 ##                self.vitx = 0
 ##        #Sur l'axe y
 ##        if (self.vity > 0):
-##            self.vity = (-f*9.81*0.02)/10*self.metre + self.vity
+##            self.vity = (-f*9.81*0.01)/10*self.metre + self.vity
 ##            if (self.vity <= 0):
 ##                self.vity = 0
 ##        elif (self.vity < 0):
-##            self.vity = (f*9.81*0.02)/10*self.metre + self.vity
+##            self.vity = (f*9.81*0.01)/10*self.metre + self.vity
 ##            if (self.vity >= 0):
 ##                self.vity = 0
 
 		#
 		f = float(main.frottement.get())
-		self.vitesse = (-f*9.81*0.02)/10*self.metre + self.vitesse
+		self.vitesse = (-f*9.81*0.01)/10*self.metre + self.vitesse
 		if self.vitesse < 0:
 			self.vitesse = 0
 		self.vitx = self.vitesse*math.cos(-self.angle)
@@ -252,7 +260,7 @@ class Ball:
 		#vitesse(t + t0) = -f*vitesse(t)/m *t0 + v0
 		#On programme cela dans une boucle de 20 ms,
 		#mais est-ce-que c'est exact?
-			
+
 ##        f = float(main.frottement.get())
 ##        self.vitx = -f*self.vitx/0.169*0.02 + self.vitx
 ##        if abs(self.vitx) < 1:
@@ -263,7 +271,7 @@ class Ball:
 ##            self.vity = 0
 
 		f = float(main.frottement.get())
-		self.vitesse = -f*self.vitesse/0.169*0.02 + self.vitesse
+		self.vitesse = -f*self.vitesse/0.169*0.01 + self.vitesse
 		if self.vitesse < 0:
 			self.vitesse = 0
 		self.vitx = self.vitesse*math.cos(-self.angle)
@@ -272,7 +280,7 @@ class Ball:
 	def collision(self, boule2):
 		#Boule1 = boule de l'objet
 		if (self.flag) and (boule2.flag):
-			pi = math.pi        
+			pi = math.pi
 			#Pour empêcher qu'il est une collision à l'infini
 			self.flag, boule2.flag = False, False
 			#Division par zéro
@@ -285,35 +293,23 @@ class Ball:
 				angle = angle + pi/2
 			if self.coordy < boule2.coordy:
 				angle = -angle
-			#Déplacement; on suppose que boule2.vitesse = self.vitesse
+			#Dans le cas où les deux billes sont en mouvement
+			#(Non développés)
 			vitesse = math.sqrt(self.vitx**2+self.vity**2)
-			#Même direction ou pas?
-			delta = abs(self.angle - angle)
-			while abs(delta) >= pi:
-				if delta < 0:
-					delta += pi
-				elif delta >= pi:
-					delta -= pi
-			#Cas v1=v2'
-			if (delta <= 0.3):
-				self.vitesse = 0
-				boule2.vitesse = vitesse
-				boule2.angle = self.angle
-			#Cas v1=v1'+v2'
+            #Boule2
+			boule2.vitesse = math.cos( abs(angle-self.angle) )*vitesse
+			boule2.angle = angle
+			#Boule1
+			self.vitesse = math.sqrt(self.vitesse**2-boule2.vitesse**2)
+			#On met les angles entre 0 et 2pi
+			if angle < 0:
+					angle += 2*pi
+			if boule2.angle < 0:
+					angle += 2*pi
+			if angle - boule2.angle < 0:
+					self.angle = boule2.angle + pi/2
 			else:
-				#Boule2
-				boule2.vitesse = 0.5*vitesse
-				boule2.angle = angle
-				#Boule1
-				self.vitesse = 0.5*self.vitesse
-				if (self.coordx < boule2.coordx) and (self.coordy < boule2.coordy):
-					self.angle = angle + pi/2
-				elif (self.coordx < boule2.coordx) and (self.coordy > boule2.coordy):
-					self.angle = angle - pi/2
-				elif (self.coordx > boule2.coordx) and (self.coordy < boule2.coordy):
-					self.angle = angle - pi/2
-				elif (self.coordx > boule2.coordx) and (self.coordy > boule2.coordy):
-					self.angle = angle + pi/2
+					self.angle = boule2.angle - pi/2
 		#Pour gérer les "flags"
 		if  math.sqrt((self.coordx - boule2.coordx)**2 + (self.coordy - boule2.coordy)**2) >= 30:
 			self.flag, boule2.flag = True, True
@@ -321,7 +317,7 @@ class Ball:
 ##                self.coordy += self.vitesse*math.sin(self.angle)*0.01
 ##                boule2.coordx += boule2.vitesse*math.cos(boule2.angle)*0.01
 ##                boule2.coordy += boule2.vitesse*math.sin(boule2.angle)*0.01
-		
+
 
 	def deplacement(self, event):
 		#On déplace la balle au coordonnnées du click...
@@ -353,7 +349,7 @@ class Simu:
 
 		#Billes
 		self.Alpha = Ball(self.terrain.fenetre, self.terrain.canvas,
-					 0, 0, dim[0], dim[1], self.metre, 'red')
+					 250, 250, dim[0], dim[1], self.metre, 'red')
 		self.Beta = Ball(self.terrain.fenetre, self.terrain.canvas,
 					 970, 0, dim[0], dim[1], self.metre, 'yellow')
 		self.Gamma = Ball(self.terrain.fenetre, self.terrain.canvas,
@@ -377,7 +373,7 @@ class Simu:
 		self.vitesse.pack(side=LEFT)
 
 		#Type frottement
-		self.label = Label(self.terrain.fenetre, text="\t\t Loi de frottement:")
+		self.label = Label(self.terrain.fenetre, text="\t Loi de frottement:")
 		self.label.pack(side=LEFT)
 
 		self.loi = StringVar(self.terrain.fenetre)
@@ -388,8 +384,14 @@ class Simu:
 		#Input frottement
 		self.label = Label(self.terrain.fenetre, text="\t Coefficient de frottement:")
 		self.label.pack(side=LEFT)
-		self.frottement = Spinbox(self.terrain.fenetre, width=10, value=0.37)
+		self.frottement = Spinbox(self.terrain.fenetre, width=8, value=0.1875)
 		self.frottement.pack(side=LEFT)
+
+		#Positions souris
+		self.posx = Label(self.terrain.fenetre, text="\t X:")
+		self.posx.pack(side=LEFT)
+		self.posy = Label(self.terrain.fenetre, text="; Y:")
+		self.posy.pack(side=LEFT)
 
 	def switch(self, event): #;-)
 		#Change la boule que l'on tire
@@ -408,6 +410,9 @@ class Simu:
 		for k in range(len(self.Boules)):
 			if self.Boules[k].focus:
 				self.Boules[k].viser(event)
+		#Affichage des positions
+		self.posx.config(text='\t X: '+str(event.x/self.metre) )
+		self.posy.config(text='; Y: '+str(event.y/self.metre) )
 
 	def tirdroit(self, event):
 		#Angle à 0
@@ -429,10 +434,15 @@ class Simu:
 		filename = tkFileDialog.asksaveasfilename(defaultextension='*.csv', filetypes=[('supported', ('*.csv'))])
 		with open(filename, 'w', newline='') as fichier:
 			file = csv.writer(fichier)
-			file.writerow(["Temps [s]", "Vrouge [m/s]", "Vjaune [m/s]", "Vblanc [m/s]"])
+			file.writerow(["Temps [s]", "Xred [m]", "Yred [m]", "Xjaune [m]", "Yjaune [m]", "Xblanc [m]", "Yblanc [m]",
+			"Vred [dm/s]", "Vjaune [dm/s]", "Vblanc [dm/s]",
+			"Dir(red) [rad]", "Dir(jaune) [rad]", "Dir(blanc) [rad]"])
 			for k in range(len(self.Alpha.savit)):
-				file.writerow([ str(round(k*0.02+0.02, 3)), str(round(self.Alpha.savit[k], 3)),
-								str(round(self.Beta.savit[k], 3)), str(round(self.Gamma.savit[k], 3)) ])
+				file.writerow([ str(round(k*0.01, 3)), str(round(self.Alpha.savex[k]/self.metre, 3)), str(round(self.Alpha.savey[k]/self.metre, 3)),
+				str(round(self.Beta.savex[k]/self.metre, 3)), str(round(self.Beta.savey[k]/self.metre, 3)),
+				str(round(self.Gamma.savex[k]/self.metre, 3)), str(round(self.Gamma.savey[k]/self.metre, 3)),
+				str(round(self.Alpha.savit[k], 3)), str(round(self.Beta.savit[k], 3)), str(round(self.Gamma.savit[k], 3)),
+				str(round(self.Alpha.sava[k], 3)), str(round(self.Beta.sava[k], 1)), str(round(self.Gamma.sava[k], 1)) ])
 
 	def lancer(self):
 		self.Alpha.focus = True
@@ -453,7 +463,8 @@ class Simu:
 		#Touche espace pour un tir droit
 		self.terrain.fenetre.bind('<space>', self.tirdroit)
 		#Touche 'S' majuscule pour enregistrer Alpha.savit
-		self.terrain.fenetre.bind('<KeyPress-S>', self.savedata)
+		self.terrain.fenetre.bind('<Control-s>', self.savedata)
+		self.terrain.fenetre.bind('<Control-S>', self.savedata)
 
 		#On lance la boucle
 		self.boucle()
@@ -471,14 +482,19 @@ class Simu:
 		#...si elles ne le sont pas, alors on enregistre les données
 		for k in range(len(self.Boules)):
 			if sigma:
+				#Positions
+				self.Boules[k].savex.append(self.Boules[k].coordx)
+				self.Boules[k].savey.append(self.Boules[k].coordy)
 				#Vitesse
 				self.Boules[k].savit.append(self.Boules[k].vitesse/self.metre*10)
+				#Angle
+				self.Boules[k].sava.append(self.Boules[k].angle)
 			if sigma and self.Boules[k].vitesse:
 				#Marqueur de la trajectoire
 				self.Boules[k].save.append(self.Boules[k].canvas.create_oval(self.Boules[k].coordx+13,
 				self.Boules[k].coordy+13, self.Boules[k].coordx+17, self.Boules[k].coordy+17, fill=self.Boules[k].couleur))
-		#On répète la boucle tous les 20 ms
-		self.terrain.fenetre.after(20, self.boucle)
+		#On répète la boucle tous les 10 ms
+		self.terrain.fenetre.after(10, self.boucle)
 
 
 if __name__ == '__main__':
